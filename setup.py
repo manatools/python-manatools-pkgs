@@ -8,7 +8,7 @@ setup(
   version=__project_version__,
   author='Angelo Naselli',
   author_email='anaselli@linux.it',
-  packages=['manatools', 'test'],
+  packages=['manatools.pkgs', 'test'],
   #scripts=['scripts/'],
   license='LICENSE',
   description='Python ManaTools pkgs',
