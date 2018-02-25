@@ -21,6 +21,8 @@ Author:  Angelo Naselli <anaselli@linux.it>
 
 @package manatools.pkgs.functions
 '''
+import dnf
+import dnf.package
 
 import manatools.pkgs.dnfbackend as dnfbackend
 
