@@ -54,6 +54,9 @@ class DnfBase(dnf.Base):
         self.conf.substitutions['releasever'] = RELEASEVER
         # progress = progress_ui.Progress()
 
+        ## Package queue
+        self.packageQueue = pkgs.PackageQueue()
+
         # read the repository infomation
         self.read_all_repos()
         if setup_sack:
