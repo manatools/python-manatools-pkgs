@@ -207,27 +207,154 @@ class Packages:
         return recent
 
 
+
+class PackageQueue:
+    '''
+    A Queue class to store selected packages/groups and the pending actions
+    '''
+
+    def __init__(self):
+        self.packages = {}
+        self.actions = {}
+        self._download_size = 0
+        self.QUEUE_PACKAGE_TYPES = {
+            'i' : 'install',
+            'u' : 'update',
+            'r' : 'remove',
+            'o' : 'obsolete',
+            'ri': 'reinstall',
+            'do': 'downgrade',
+            'li': 'localinstall'
+        }
+        self._setup_packages()
+
+    def _setup_packages(self):
+        for key in self.QUEUE_PACKAGE_TYPES.keys():
+            self.packages[key] = []
+
+    def clear(self):
+        del self.packages
+        self.packages = {}
+        self._setup_packages()
+        self.actions = {}
+        self._download_size = 0
+
+
+    def get(self, action=None):
+        if action is None:
+            return self.packages
+        else:
+            return self.packages[action]
+
+    def total(self):
+        num = 0
+        for key in self.QUEUE_PACKAGE_TYPES.keys():
+            num += len(self.packages[key])
+        return num
+
+    def downloadsize(self):
+      ''' returns the current total download size '''
+      return self._download_size
+
+    def add(self, pkg, action):
+      """Add a package to queue"""
+      pkgid = pkg_id(pkg)
+      if pkgid in self.actions.keys():
+        old_action = self.actions[pkgid]
+        if old_action != action:
+          # decrease size if old action was to install, update or reinstall a package
+          if old_action == 'i' or old_action == 'ri' or old_action == 'u':
+            self._download_size -= pkg.download_size
+          self.packages[old_action].remove(pkgid)
+          if (pkg.installed and action != 'i' or not pkg.installed and action != 'r'):
+            self.packages[action].append(pkgid)
+            self.actions[pkgid] = action
+            # increase size if old action was to install, update or reinstall a package
+            if action == 'i' or action == 'ri' or action == 'u':
+              self._download_size += pkg.download_size
+          else:
+            del self.actions[pkgid]
+      else:
+        self.packages[action].append(pkgid)
+        self.actions[pkgid] = action
+        # increase size if old action was to install, update or reinstall a package
+        if action == 'i' or action == 'ri' or action == 'u':
+          self._download_size += pkg.download_size
+
+    def checked(self, pkg):
+        '''
+        returns if a package has to be checked in gui pacakge-list
+        '''
+        pkgid = pkg_id(pkg)
+        if pkgid in self.actions.keys():
+            return pkg.installed and self.actions[pkgid] != 'r' or self.actions[pkgid] != 'r'
+        return pkg.installed
+
+    def action(self, pkg):
+        '''
+        returns the action of the queued package or None if pacakge is not queued
+        '''
+        pkgid = pkg_id(pkg)
+        if pkgid in self.actions.keys():
+            return self.actions[pkgid]
+        return None
+
+    def remove(self, pkg):
+        """Remove package from queue"""
+        pkgid = pkg_id(pkg)
+        if pkgid in self.actions.keys():
+            action = self.actions[pkgid]
+            self.packages[action].remove(pkgid)
+            del self.actions[pkgid]
+
 def get_pkg_info(pkg):
     '''
     returns package description
     '''
-    return pkg.description
-
-def pkg_id(pkg):
-    '''
-    return pkg_id as nevra from a dnf.package.Package
-    '''
     if not isinstance(pkg, dnf.package.Package):
         raise ValueError
 
-    if pkg.epoch and pkg.epoch != '0':
-        return "%s-%s:%s-%s.%s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
-    else:
-        return "%s-%s-%s.%s" % (pkg.name, pkg.version, pkg.release, pkg.arch)
+    return pkg.description
+
+def pkg_id(pkg):
+  '''
+  return pkg_id as nevra from a dnf.package.Package
+  '''
+  if not isinstance(pkg, dnf.package.Package):
+    raise ValueError
+
+  return "%s,%s,%s,%s,%s,%s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch, pkg.reponame)
+
+
+def to_pkg_tuple(pkg_id):
+  """Find the real package nevre & repoid from an package pkg_id"""
+  (n, e, v, r, a, repo_id) = str(pkg_id).split(',')
+  return (n, e, v, r, a, repo_id)
+
+def pkg_id_to_fullname(pkg_id):
+  '''
+  return the fullname from pkg_id
+  '''
+  (n, e, v, r, a, repo_id) = to_pkg_tuple(pkg_id)
+  if e and e != '0':
+    return "%s-%s:%s-%s.%s" % (n, e, v, r, a)
+  else:
+    return "%s-%s-%s.%s" % (n, v, r, a)
 
 def fullname(pkg):
     '''
     return package full name as nevra
     '''
-    return pkg_id(pkg)
+    if not isinstance(pkg, dnf.package.Package):
+      raise ValueError
+
+    if pkg.epoch and pkg.epoch != '0':
+      return "%s-%s:%s-%s.%s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
+    else:
+      return "%s-%s-%s.%s" % (pkg.name, pkg.version, pkg.release, pkg.arch)
+
+
+
+
+
 
