@@ -38,6 +38,13 @@ class TestFunctions(unittest.TestCase):
     fn = packages.fullname(p)
     self.assertEqual(fn, fn_from_pkgid, "pkg_id fullname")
 
+  def test_packagesProviding(self):
+    p_name="dnf"
+    pl = functions.packagesProviding(self.dnf_base, p_name);
+    self.assertTrue(len(pl) > 0)
+    print("%s is provided by:"%(p_name))
+    for p in pl:
+      print(" ", packages.fullname(p))
 
 if __name__ == '__main__':
     unittest.main()
