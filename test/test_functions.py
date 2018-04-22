@@ -18,6 +18,26 @@ class TestFunctions(unittest.TestCase):
     packages = functions.protected(self.dnf_base)
     self.assertTrue( len(packages) > 0)
  
+  def test_selectedSize(self):
+    sz = functions.selectedSize(self.dnf_base)
+    self.assertTrue(sz == 0)
+
+  def test_getPackageByName(self):
+    p_name="bless"
+    p = functions.packageByName(self.dnf_base, p_name)
+    self.assertIsNotNone(p)
+    self.assertEqual(p.name, p_name, 'looking for "bless" package')
+
+  def test_pkg_id(self):
+    p_name="bless"
+    p = functions.packageByName(self.dnf_base, p_name)
+    self.assertIsNotNone(p)
+    self.assertEqual(p.name, p_name, 'looking for "bless" package')
+    pkgid = packages.pkg_id(p)
+    fn_from_pkgid = packages.pkg_id_to_fullname(pkgid)
+    fn = packages.fullname(p)
+    self.assertEqual(fn, fn_from_pkgid, "pkg_id fullname")
+
 
 if __name__ == '__main__':
     unittest.main()
