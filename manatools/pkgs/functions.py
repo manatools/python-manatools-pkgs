@@ -28,7 +28,8 @@ import manatools.pkgs.dnfbackend as dnfbackend
 
 def selectedSize(dnf_base):
     '''
-    return the transaction pacakge size
+      return the transaction download size if a transaction has been run,
+      or the action queue content size otherwise
     '''
     if not isinstance(dnf_base, dnfbackend.DnfBase):
         raise ValueError
@@ -38,6 +39,8 @@ def selectedSize(dnf_base):
         for tsi in dnf_base.transaction:
             if tsi.installed:
                 total_size += tsi.installed.downloadsize
+    else:
+      total_size = dnf_base.packageQueue.downloadsize()
     return total_size
 
 def packagesProviding(dnf_base, name):
@@ -49,7 +52,7 @@ def packagesProviding(dnf_base, name):
 
     dnf_base.packages.all
     q = dnf_base.packages.query
-    i = q.filter(name=name)
+    i = q.filter(provides=name,latest=True)
 
     return i.run()
 
@@ -63,7 +66,7 @@ def packageByName(dnf_base, name):
 
     dnf_base.packages.all
     q = dnf_base.packages.query
-    i = q.filter(provides=name,latest=True)
+    i = q.filter(name=name,latest=True)
     p = i.run()
     if len(p) > 0:
         return p[0]
@@ -86,7 +89,7 @@ def packagesToInstall(dnf_base):
 
 def filter(query, options):
     '''
-    return a query filterd by options (wrapping dnf.quiery.filter) cause of named parameters
+    return a query filterd by options (wrapping dnf.query.filter) cause of named parameters
     '''
     if not isinstance(query, dnf.query.Query):
         raise ValueError
@@ -136,7 +139,7 @@ def select_by_package_names(dnf_base, names, protected=False):
         if protected:
             p = packageByName(dnf_base, name)
             if p:
-                dnf_base.packages.addToProtected(pkg)
+                dnf_base.packages.addToProtected(p)
     #TODO manage return package list (transaction)
 
 def select_by_package_names_or_die(dnf_base, names, protected=False):
