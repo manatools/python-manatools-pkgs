@@ -264,14 +264,14 @@ class PackageQueue:
         if old_action != action:
           # decrease size if old action was to install, update or reinstall a package
           if old_action == 'i' or old_action == 'ri' or old_action == 'u':
-            self._download_size -= pkg.download_size
+            self._download_size -= pkg.downloadsize
           self.packages[old_action].remove(pkgid)
           if (pkg.installed and action != 'i' or not pkg.installed and action != 'r'):
             self.packages[action].append(pkgid)
             self.actions[pkgid] = action
             # increase size if old action was to install, update or reinstall a package
             if action == 'i' or action == 'ri' or action == 'u':
-              self._download_size += pkg.download_size
+              self._download_size += pkg.downloadsize
           else:
             del self.actions[pkgid]
       else:
@@ -279,33 +279,64 @@ class PackageQueue:
         self.actions[pkgid] = action
         # increase size if old action was to install, update or reinstall a package
         if action == 'i' or action == 'ri' or action == 'u':
-          self._download_size += pkg.download_size
+          self._download_size += pkg.downloadsize
+
+    def add_to_install(self, pkg):
+      '''
+      add pkg with action 'i' (shortcut)
+      '''
+      self.add(pkg, 'i')
+
+    def add_to_remove(self, pkg):
+      '''
+      add pkg with action 'r' (shortcut)
+      '''
+      self.add(pkg, 'r')
 
     def checked(self, pkg):
-        '''
-        returns if a package has to be checked in gui pacakge-list
-        '''
-        pkgid = pkg_id(pkg)
-        if pkgid in self.actions.keys():
-            return pkg.installed and self.actions[pkgid] != 'r' or self.actions[pkgid] != 'r'
-        return pkg.installed
+      '''
+      returns if a package has to be checked in gui pacakge-list
+      '''
+      pkgid = pkg_id(pkg)
+      if pkgid in self.actions.keys():
+        return pkg.installed and self.actions[pkgid] != 'r' or self.actions[pkgid] != 'r'
+      return pkg.installed
 
     def action(self, pkg):
-        '''
-        returns the action of the queued package or None if pacakge is not queued
-        '''
-        pkgid = pkg_id(pkg)
-        if pkgid in self.actions.keys():
-            return self.actions[pkgid]
-        return None
+      '''
+      returns the action of the queued package or None if pacakge is not queued
+      '''
+      pkgid = pkg_id(pkg)
+      if pkgid in self.actions.keys():
+        return self.actions[pkgid]
+      return None
 
     def remove(self, pkg):
-        """Remove package from queue"""
-        pkgid = pkg_id(pkg)
-        if pkgid in self.actions.keys():
-            action = self.actions[pkgid]
-            self.packages[action].remove(pkgid)
-            del self.actions[pkgid]
+      """Remove package from queue"""
+      pkgid = pkg_id(pkg)
+      if pkgid in self.actions.keys():
+        action = self.actions[pkgid]
+        self.packages[action].remove(pkgid)
+        del self.actions[pkgid]
+
+    def install_list(self):
+      '''
+      return the install package list
+      '''
+      return self.packages['i']
+
+    def update_list(self):
+      '''
+      return the update package list
+      '''
+      return self.packages['u']
+
+    def uninstall_list(self):
+      '''
+      return the uninstall package list
+      '''
+      return self.packages['r']
+
 
 def get_pkg_info(pkg):
     '''
