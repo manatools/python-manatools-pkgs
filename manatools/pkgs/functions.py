@@ -78,13 +78,26 @@ def packagesToInstall(dnf_base):
     return the package list to be installed from transaction
     '''
     if not isinstance(dnf_base, dnfbackend.DnfBase):
-        raise ValueError
+      raise ValueError
 
     to_dnl = []
     if dnf_base.transaction:
-        for tsi in dnf_base.transaction:
-            if tsi.installed:
-                to_dnl.append(tsi.installed)
+      for tsi in dnf_base.transaction:
+        if tsi.installed:
+          to_dnl.append(tsi.installed)
+    else:
+      il = dnf_base.packageQueue.install_list()
+      #NOTE adding also updates by now
+      #TODO check if correct
+      il.extend(dnf_base.packageQueue.update_list())
+      q = dnf_base.sack.query()
+      f = q.available()
+      for pid in il:
+        (n, e, v, r, a, repo_id) = pid.split(',')
+        pl = f.filter(name=n, version=v, release=r, arch=a)
+        if len(pl) > 0:
+          to_dnl.append(pl[0])
+
     return to_dnl
 
 def filter(query, options):
@@ -135,11 +148,11 @@ def select_by_package_names(dnf_base, names, protected=False):
         raise ValueError
 
     for name in names:
-        dnf_base.install(name)
+      p = packageByName(dnf_base, name)
+      if p:
+        dnf_base.packageQueue.add_to_install(p)
         if protected:
-            p = packageByName(dnf_base, name)
-            if p:
-                dnf_base.packages.addToProtected(p)
+          dnf_base.packages.addToProtected(p)
     #TODO manage return package list (transaction)
 
 def select_by_package_names_or_die(dnf_base, names, protected=False):
@@ -160,7 +173,7 @@ def selectPackage(dnf_base, pkg, protected=False):
     if not isinstance(pkg, dnf.package.Package):
         raise ValueError
 
-    dnf_base.install(pkg.name)
+    dnf_base.packageQueue.add_to_install(pkg)
     if protected:
         dnf_base.packages.addToProtected(pkg)
 
@@ -169,19 +182,13 @@ def unselectPackage(dnf_base, pkg):
     unselect a package from install if not protected
     '''
     if not isinstance(dnf_base, dnfbackend.DnfBase):
-        raise ValueError
+      raise ValueError
 
     if not isinstance(pkg, dnf.package.Package):
-        raise ValueError
+      raise ValueError
 
     if not is_protected(dnf_base, pkg) :
-        install_set = dnf_base.transaction.install_set
-        for p in  install_set:
-            if p.name == pkg.name :
-                install_set.remove(p)
-                #TODO next does not remove it from transaction
-                #dnf_base.transaction.add_erase(pkg)
-    #TODO log
+      dnf_base.packageQueue.add_to_remove(pkg)
 
 def unselectAllPackages(dnf_base) :
     '''
@@ -192,4 +199,4 @@ def unselectAllPackages(dnf_base) :
 
     for p in packagesToInstall():
         if not is_protected(dnf_base, p):
-            dnf_base.remove(p.name)
+            dnf_base.packageQueue.remove(p)
