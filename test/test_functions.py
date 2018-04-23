@@ -46,5 +46,15 @@ class TestFunctions(unittest.TestCase):
     for p in pl:
       print(" ", packages.fullname(p))
 
+  def test_packagesToInstall(self):
+    name_list = ["btanks"]
+    functions.select_by_package_names(self.dnf_base, name_list)
+    pl = functions.packagesToInstall(self.dnf_base)
+    self.assertTrue(len(pl) > 0)
+    print(" ")
+    for p in pl:
+      print(" ", packages.fullname(p))
+
+
 if __name__ == '__main__':
     unittest.main()
