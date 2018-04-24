@@ -55,6 +55,27 @@ class TestFunctions(unittest.TestCase):
     for p in pl:
       print(" ", packages.fullname(p))
 
+  def test_unselectAllPackages(self):
+    p_name = "kernel-desktop-latest"
+    kp = functions.packageByName(self.dnf_base, p_name)
+    name_list = ["bless"]
+    functions.select_by_package_names(self.dnf_base, name_list)
+    print(" ")
+    self.assertIsNotNone(kp)
+    print( " selecting kernel and adding to protected %s", packages.pkg_id(kp))
+    functions.selectPackage(self.dnf_base, kp, True)
+    self.assertTrue(functions.is_protected(self.dnf_base, kp))
+    pl = functions.packagesToInstall(self.dnf_base)
+    print(" Selected:")
+    self.assertTrue(len(pl) > 0)
+    for p in pl:
+      print(" ", packages.fullname(p))
+    functions.unselectAllPackages(self.dnf_base)
+    print(" After the unselect all:")
+    pl = functions.packagesToInstall(self.dnf_base)
+    self.assertTrue(len(pl) > 0)
+    for p in pl:
+      print(" ", packages.fullname(p))
 
 if __name__ == '__main__':
     unittest.main()
