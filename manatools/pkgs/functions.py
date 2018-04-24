@@ -197,6 +197,6 @@ def unselectAllPackages(dnf_base) :
     if not isinstance(dnf_base, dnfbackend.DnfBase):
         raise ValueError
 
-    for p in packagesToInstall():
+    for p in packagesToInstall(dnf_base):
         if not is_protected(dnf_base, p):
             dnf_base.packageQueue.remove(p)
