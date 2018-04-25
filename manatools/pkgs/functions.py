@@ -26,6 +26,12 @@ import dnf.package
 
 import manatools.pkgs.dnfbackend as dnfbackend
 
+def dnfBase(setup_sack=True, pbar=None):
+  '''
+  returns a dnf base object
+  '''
+  return dnfbackend.DnfBase(setup_sack, pbar)
+
 def selectedSize(dnf_base):
     '''
       return the transaction download size if a transaction has been run,
