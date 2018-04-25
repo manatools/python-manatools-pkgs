@@ -172,6 +172,7 @@ class Packages:
     def protected(self, clean_cache=False) :
         '''
         protected (base) package list, if clean_cache is True, cache them again
+        NOTE that cleaning cache will loose all the added packages by addToProtected()
         '''
         if not self._protected or clean_cache:
             self._cacheProtected()
@@ -347,18 +348,20 @@ def get_pkg_info(pkg):
 
     return pkg.description
 
-def pkg_id(pkg):
+def pkg_id(pkg, with_repo=False):
   '''
   return pkg_id as nevra from a dnf.package.Package
   '''
   if not isinstance(pkg, dnf.package.Package):
     raise ValueError
+  if with_repo:
+    return "%s,%s,%s,%s,%s,%s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch, pkg.reponame)
 
-  return "%s,%s,%s,%s,%s,%s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch, pkg.reponame)
+  return "%s,%s,%s,%s,%s,*" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
 
 
 def to_pkg_tuple(pkg_id):
-  """Find the real package nevre & repoid from an package pkg_id"""
+  """Find the real package nevra & repoid (or *) from a package pkg_id"""
   (n, e, v, r, a, repo_id) = str(pkg_id).split(',')
   return (n, e, v, r, a, repo_id)
 
