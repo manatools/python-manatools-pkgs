@@ -9,7 +9,7 @@ from manatools.pkgs import progress
 class TestFunctions(unittest.TestCase):
   def setUp(self):
     pbar = progress.Progress()
-    self.dnf_base = dnfbackend.DnfBase(True, pbar)
+    self.dnf_base = functions.dnfBase(True, pbar)
 
   def test_dnfbase(self):
     self.assertIsNotNone(self.dnf_base)
@@ -75,7 +75,9 @@ class TestFunctions(unittest.TestCase):
     pl = functions.packagesToInstall(self.dnf_base)
     self.assertTrue(len(pl) > 0)
     for p in pl:
-      print(" ", packages.fullname(p))
+      print(" ", packages.fullname(p), " ", packages.pkg_id(p))
+      if p.name == p_name:
+        self.assertTrue(functions.is_protected(self.dnf_base, p))
 
 if __name__ == '__main__':
     unittest.main()
